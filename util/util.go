@@ -252,6 +252,7 @@ func GetCloudConfig(bootstrapParams params.BootstrapInstance, tools github.Runne
 		CallbackURL:       bootstrapParams.CallbackURL,
 		CallbackToken:     bootstrapParams.InstanceToken,
 		GitHubRunnerGroup: bootstrapParams.GitHubRunnerGroup,
+		JITConfig:         bootstrapParams.JITConfig,
 	}
 	if bootstrapParams.CACertBundle != nil && len(bootstrapParams.CACertBundle) > 0 {
 		installRunnerParams.CABundle = string(bootstrapParams.CACertBundle)

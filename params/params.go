@@ -219,6 +219,9 @@ type BootstrapInstance struct {
 
 	// UserDataOptions are the options for the user data generation.
 	UserDataOptions UserDataOptions `json:"user_data_options"`
+
+	// Just-In-Time Configuration for the runner
+	JITConfig string `json:"jit_config"`
 }
 
 type UserDataOptions struct {

@@ -29,14 +29,7 @@ set -e
 set -o pipefail
 
 CALLBACK_URL="{{ .CallbackURL }}"
-METADATA_URL="{{ .MetadataURL }}"
 BEARER_TOKEN="{{ .CallbackToken }}"
-
-if [ -z "$METADATA_URL" ];then
-	echo "no token is available and METADATA_URL is not set"
-	exit 1
-fi
-GITHUB_TOKEN=$(curl --fail -s -X GET -H 'Accept: application/json' -H "Authorization: Bearer ${BEARER_TOKEN}" "${METADATA_URL}/runner-registration-token/")
 
 function call() {
 	PAYLOAD="$1"
@@ -124,17 +117,14 @@ fi
 
 
 sendStatus "configuring runner"
-sudo -u {{ .RunnerUsername }} -- ./config.sh --unattended --url "{{ .RepoURL }}" --token "$GITHUB_TOKEN" $RUNNER_GROUP_OPT --name "{{ .RunnerName }}" --labels "{{ .RunnerLabels }}" --ephemeral || fail "failed to configure runner"
-
 sendStatus "installing runner service"
-./svc.sh install {{ .RunnerUsername }} || fail "failed to install service"
-
-if [ -e "/sys/fs/selinux" ];then
-    sudo chcon -R -t bin_t /home/runner/
-fi
-
 sendStatus "starting service"
-./svc.sh start || fail "failed to start service"
+nohup ./run.sh --jitconfig "{{ .JITConfig }}"
+BG_PID=$!
+sleep 10
+if !kill -0 $BG_PID; then
+	fail "failed to start service"
+fi
 
 set +e
 AGENT_ID=$(grep "agentId" /home/{{ .RunnerUsername }}/actions-runner/.runner |  tr -d -c 0-9)
@@ -143,7 +133,7 @@ if [ $? -ne 0 ];then
 fi
 set -e
 
-success "runner successfully installed" $AGENT_ID
+success "runner successfully started" $AGENT_ID
 `
 
 var WindowsSetupScriptTemplate = `#ps1_sysnative
@@ -387,6 +377,7 @@ type InstallRunnerParams struct {
 	TempDownloadToken string
 	CABundle          string
 	GitHubRunnerGroup string
+	JITConfig         string
 }
 
 func InstallRunnerScript(installParams InstallRunnerParams, osType params.OSType) ([]byte, error) {

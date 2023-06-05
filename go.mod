@@ -1,4 +1,4 @@
-module github.com/cloudbase/garm
+module github.com/mkulke/garm
 
 go 1.20
 
